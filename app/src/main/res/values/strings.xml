@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">My Note App</string>
+    <string name="quick_shortcut">新增筆記</string>
+    <string name="quick_shortcut_long">立即開啟 My Note App 新增筆記</string>
+</resources>

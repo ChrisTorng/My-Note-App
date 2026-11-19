@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut android:shortcutId="quick_add"
+        android:enabled="true"
+        android:icon="@drawable/ic_quick"
+        android:shortcutShortLabel="@string/quick_shortcut"
+        android:shortcutLongLabel="@string/quick_shortcut_long">
+        <intent android:action="tw.idv.christorng.mynoteapp.QUICK_ADD"
+            android:targetPackage="tw.idv.christorng.mynoteapp"
+            android:targetClass="tw.idv.christorng.mynoteapp.MainActivity">
+            <extra android:name="quick" android:value="true" />
+        </intent>
+    </shortcut>
+</shortcuts>
