@@ -169,6 +169,13 @@ public final class MainActivity extends Activity {
         banner(r,"My Note App",null);
         TextView help=text("登入既有 MyNote 帳號。筆記將繼續儲存在原本的 Cloudflare 後端。",14,false);
         pad(help,0,18);r.addView(help);
+        TextView serverLabel=text("MyNote Worker HTTPS 網址",13,true);
+        r.addView(serverLabel);
+        EditText server=new EditText(this);server.setSingleLine(true);
+        server.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_URI);
+        server.setHint("https://your-mynote-worker.workers.dev");
+        server.setText(api.origin());
+        r.addView(server,new LinearLayout.LayoutParams(-1,-2));
         TextView nameLabel=text("裝置名稱",13,true);r.addView(nameLabel);
         EditText name=new EditText(this);name.setSingleLine(true);
         name.setText(api.deviceName());r.addView(name,new LinearLayout.LayoutParams(-1,-2));
@@ -179,6 +186,8 @@ public final class MainActivity extends Activity {
         Button go=button("登入",()->{
             String access=code.getText().toString(), deviceName=name.getText().toString().trim();
             if(access.isEmpty()) {toast("請輸入存取碼");return;}
+            try { api.setOrigin(server.getText().toString()); }
+            catch(Exception e) {toast("伺服器網址無效："+e.getMessage());return;}
             io.execute(()->{
                 try {
                     api.login(access,deviceName.isEmpty()?"Android":deviceName);

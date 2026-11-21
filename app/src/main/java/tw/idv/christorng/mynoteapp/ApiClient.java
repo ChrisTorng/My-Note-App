@@ -26,7 +26,6 @@ import javax.crypto.spec.GCMParameterSpec;
 
 /** Native HTTP client for the existing MyNote Worker; never opens a WebView. */
 final class ApiClient {
-    static final String ORIGIN = "https://mynote.christorng.workers.dev";
     private static final String KEY_ALIAS = "MyNoteAppSessionKey";
     private static final Pattern COOKIE = Pattern.compile("(?:^|;\\s*)mynote_session=([A-Za-z0-9_-]*)");
     private final SharedPreferences prefs;
@@ -44,7 +43,23 @@ final class ApiClient {
                 .putString("deviceName", device.optString("name", "Android")).apply();
     }
     void changeName(String value) { prefs.edit().putString("deviceName", value).apply(); }
-    boolean hasSession() { return !session().isEmpty(); }
+    // The service endpoint is chosen locally; it is not bundled into public releases.
+    String origin() { return prefs.getString("workerOrigin", "").trim(); }
+    void setOrigin(String input) throws Exception {
+        URL url = new URL(input.trim());
+        String path = url.getPath();
+        if (!"https".equalsIgnoreCase(url.getProtocol()) || url.getHost().isEmpty()
+                || url.getUserInfo() != null || url.getQuery() != null || url.getRef() != null
+                || !(path.isEmpty() || "/".equals(path)))
+            throw new IllegalArgumentException("請輸入 MyNote Worker 的 HTTPS 網址（不含 /api）");
+        String next = "https://" + url.getAuthority();
+        if (!next.equals(origin())) {
+            // Never reuse a session or server-side device ID across independent deployments.
+            prefs.edit().putString("workerOrigin", next).remove("session")
+                    .remove("deviceId").putInt("remoteVersion", 0).apply();
+        }
+    }
+    boolean hasSession() { return !origin().isEmpty() && !session().isEmpty(); }
     int remoteVersion() { return prefs.getInt("remoteVersion", 0); }
     void setRemoteVersion(int version) { prefs.edit().putInt("remoteVersion", version).apply(); }
 
@@ -58,7 +73,9 @@ final class ApiClient {
     }
 
     JSONObject request(String path, String method, JSONObject body) throws Exception {
-        HttpURLConnection c = (HttpURLConnection) new URL(ORIGIN + "/api" + path).openConnection();
+        String origin = origin();
+        if (origin.isEmpty()) throw new IllegalStateException("請先設定自己的 MyNote Worker 網址");
+        HttpURLConnection c = (HttpURLConnection) new URL(origin + "/api" + path).openConnection();
         c.setRequestMethod(method);
         c.setConnectTimeout(8000);
         c.setReadTimeout(12000);
@@ -66,7 +83,7 @@ final class ApiClient {
         c.setRequestProperty("Accept", "application/json");
         String token = session();
         if (!token.isEmpty()) c.setRequestProperty("Cookie", "mynote_session=" + token);
-        if (!"GET".equals(method)) c.setRequestProperty("Origin", ORIGIN);
+        if (!"GET".equals(method)) c.setRequestProperty("Origin", origin);
         if (body != null) {
             c.setDoOutput(true);
             c.setRequestProperty("Content-Type", "application/json; charset=utf-8");

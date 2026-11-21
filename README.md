@@ -1,6 +1,6 @@
 # My Note App（Android 原生版）
 
-獨立的 Android Studio / Gradle 專案，連線至既有的 [MyNote](https://mynote.christorng.workers.dev/) Cloudflare Worker。**不修改原有網站、資料庫或 API**；不會取代 Todo。
+獨立的 Android Studio / Gradle 專案，連線至使用者自行部署的 MyNote Cloudflare Worker。**不修改原有網站、資料庫或 API**；不會取代 Todo。
 
 ## 設計
 
@@ -8,7 +8,7 @@
 - **獨立 App**：安裝名稱「My Note App」，與瀏覽器及 PWA 是不同的應用程式。
 - **真正的新增捷徑**：長按 App 圖示的「新增筆記」快捷動作，或從 App 右上角選單選「建立桌面新增捷徑」。快捷動作直接進入原生新增畫面、游標位於編輯框並嘗試顯示鍵盤，不先載入列表。
 - **離線優先**：SQLite 本機保存；輸入後 550ms 自動儲存，切換 App 或離開編輯器時立即落盤；建立／修改／封存／刪除佇列在恢復連線後同步。
-- **原資料互通**：沿用 `/api/login`、`/api/state`、`/api/note`、`/api/archive`、`/api/category`、`/api/device`。可瀏覽既有所有筆記；跨裝置仍遵循「建立端可編輯，其他端唯讀」，但各端均能封存。
+- **原資料互通**：登入畫面可設定自己的 HTTPS Worker 網址（儲存在裝置，不寫入 Repo 或 APK），沿用 `/api/login`、`/api/state`、`/api/note`、`/api/archive`、`/api/category`、`/api/device`。可瀏覽既有所有筆記；跨裝置仍遵循「建立端可編輯，其他端唯讀」，但各端均能封存。
 - **登入**：重用既有存取碼、180 天滑動工作階段。Cookie Session 使用 Android Keystore AES-GCM 加密後保存在 SharedPreferences。
 
 ## 第一版功能
@@ -16,6 +16,12 @@
 原生登入、快速新增、一般新增、編輯、複製整筆、搜尋內文／裝置／日期、分類的新增／更名／刪除、Current／Archive、封存／還原／刪除、連結點擊（唯讀筆記）、裝置更名、工作階段重新登入；原本的資料不用移轉。
 
 本版未實作網頁版的桌面三欄寬度調整、WebSocket 推播、完整 PWA 安裝行為與逐項 UI 版面對照。筆記修改由本機排程同步，App 開啟期間每 60 秒拉取一次更新；背景不常駐。
+
+## 私人實例與公開原始碼
+
+本 Repo 不包含維護者的 MyNote 服務網址、筆記內容、存取碼或部署憑證。首次登入時輸入自己的 Cloudflare Worker HTTPS 網址與存取碼。GitHub 公開的開發版 APK 不預設連到任何人的服務。
+
+**從舊版升級：** 舊版 APK 曾包含固定的維護者 Worker 網址；新版移除該預設，首次開啟必須重新輸入 Worker 網址與存取碼。SQLite 本機筆記不會被刪除。切換到其他後端前請確認資料隔離，避免把既有離線筆記同步到錯誤的服務。
 
 ## 取得 APK
 

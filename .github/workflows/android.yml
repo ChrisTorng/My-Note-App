@@ -7,7 +7,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -27,3 +27,20 @@ jobs:
           name: My-Note-App-debug
           path: app/build/outputs/apk/debug/*.apk
           retention-days: 30
+
+      - name: Publish versioned development APK release
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[publish-release]') }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          VERSION=$(sed -n "s/.*versionName '\([^']*\)'.*/\1/p" app/build.gradle | head -n 1)
+          test -n "$VERSION"
+          TAG="v${VERSION}-dev"
+          mkdir -p dist
+          cp app/build/outputs/apk/debug/app-debug.apk "dist/My-Note-App-v${VERSION}-debug.apk"
+          (cd dist && sha256sum *.apk > SHA256SUMS.txt)
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --target "$GITHUB_SHA" --title "My Note App ${TAG} (development)" --prerelease --notes "Development/debug APK. Not production signed; Android updates may require uninstalling earlier debug builds. On first login, enter your own MyNote Worker HTTPS URL. No private maintainer endpoint is bundled."
+          fi
+          gh release upload "$TAG" dist/*.apk dist/SHA256SUMS.txt --clobber
